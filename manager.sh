@@ -121,30 +121,6 @@ auto_su() {
     [[ $UID == 0 ]] || exec sudo -p "$PROGRAM must be run as root. Please enter the password for %u to continue: " -- "$BASH" -- "$SELF" "${ARGS[@]}"
 }
 
-add_if() {
-    # 기본 포트 설정
-    PORT=8080
-
-    # 사용 가능한 포트를 찾는 함수
-    find_available_port() {
-        while ss -tuln | grep -q ":$PORT"; do
-            ((PORT++))
-        done
-    }
-
-    # 사용 가능한 포트 찾기
-    find_available_port
-
-    echo "사용할 포트: $PORT"  # 최종 포트 출력
-
-    echo "starting node..." >&2
-    # cmd "./node" --ifname "$INTERFACE"
-    cmd node --ifname "$INTERFACE" --port "$PORT"  # 수정된 부분
-    echo "main is up." >&2
-    cmd ifconfig "$INTERFACE" up
-    echo "interface is up." >&2
-}
-
 del_if() {
 	local table
 	[[ $HAVE_SET_FIREWALL -eq 0 ]] || remove_firewall
@@ -335,6 +311,32 @@ cmd_usage() {
 	Usage: $PROGRAM [ up | down ]
   sudo is necessary for this program would add / remove virtual network interface.
 	_EOF
+}
+
+add_if() {
+    # 기본 포트 설정
+    local PORT=8080
+
+    # 사용 가능한 포트를 찾는 함수
+    find_available_port() {
+        while ss -tuln | grep -q ":$PORT"; do
+            ((PORT++))
+        done
+    }
+
+    # 사용 가능한 포트 찾기
+    find_available_port
+
+    echo "사용할 포트: $PORT"  # 최종 포트 출력
+
+    echo "starting node..." >&2
+    cmd node --ifname "$INTERFACE" --port "$PORT"  # 수정된 부분
+    echo "main is up." >&2
+    cmd ifconfig "$INTERFACE" up
+    echo "interface is up." >&2
+
+    # 포트 번호 반환
+    echo "$PORT"
 }
 
 cmd_up() {
