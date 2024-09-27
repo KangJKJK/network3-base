@@ -411,4 +411,6 @@ else
 	exit 1
 fi
 
+echo "You can access the dashboard by opening https://account.network3.ai/main?o=$(hostname -I | awk '{print $1}'):$PORT in Chrome." >&2
+
 exit 0
