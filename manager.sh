@@ -355,6 +355,9 @@ cmd_up() {
 	add_route "10.77.64.0/20"
 	echo "routes added." >&2
 	execute_hooks "${POST_UP[@]}"
+	# cmd_if에서 설정된 포트를 사용
+	echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:$PORT in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
+	trap - INT TERM EXIT
 	echo "node is ready." >&2
 	echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
 	trap - INT TERM EXIT
