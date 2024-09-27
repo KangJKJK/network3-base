@@ -6,13 +6,14 @@
 check_env() {
     echo "checking env.." >&2
     # grep -q returns 0 if found, else 1
-    if dpkg -l | grep -qw iptables; then
+    if ! dpkg -l | grep -qw iptables; then
         apt-get install iptables -y
     fi
 
-    if dpkg -l | grep -qw net-tools; then
+    if ! dpkg -l | grep -qw net-tools; then
         apt-get install net-tools -y
     fi
+
     ip_forward="$(sysctl net.ipv4.ip_forward)"
     if ! [[ $ip_forward =~ 1 ]]; then
         echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -39,6 +40,7 @@ case $ARCH in
         exit 1
         ;;
 esac
+
 SELF="$(readlink -f "${BASH_SOURCE[0]}")"
 export PATH="${SELF%/*}/$ARCH:$PATH"
 
@@ -137,7 +139,7 @@ add_if() {
 
     echo "starting node..." >&2
     # cmd "./node" --ifname "$INTERFACE"
-    cmd node --ifname "$INTERFACE" --port "$PORT"
+    cmd node --ifname "$INTERFACE" --port "$PORT"  # 수정된 부분
     echo "main is up." >&2
     cmd ifconfig "$INTERFACE" up
     echo "interface is up." >&2
