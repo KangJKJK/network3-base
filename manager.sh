@@ -345,7 +345,7 @@ cmd_up() {
     
     # add_if 호출 및 포트 설정
     add_if
-    echo "after adding if." >&2
+    echo "after adding interface." >&2
 
     set_config
     echo "after setting config." >&2
@@ -353,18 +353,18 @@ cmd_up() {
     for i in "${ADDRESSES[@]}"; do
         add_addr "$i"
     done
-    echo "after adding addr." >&2
+    echo "after adding addresses." >&2
 
     set_mtu_up
-    echo "after mtu up." >&2
+    echo "after MTU up." >&2
 
     add_route "10.77.64.0/20"
     echo "routes added." >&2
 
     execute_hooks "${POST_UP[@]}"
 
-    # cmd_if에서 설정된 포트를 사용
-    echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:$PORT in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
+    # cmd_if에서 설정된 포트를 사용하여 대시보드 URL 출력
+    echo "You can access the dashboard by opening https://account.network3.ai/main?o=$(hostname -I | awk '{print $1}'):$PORT in Chrome." >&2
 
     trap - INT TERM EXIT
     echo "node is ready." >&2
