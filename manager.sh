@@ -344,10 +344,10 @@ cmd_up() {
     [[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
     trap 'del_if; exit' INT TERM EXIT
     execute_hooks "${PRE_UP[@]}"
-    
+
     # add_if 호출 및 포트 설정
-    add_if
-    echo "after adding interface." >&2
+    PORT=$(add_if)  # add_if 호출하여 PORT 값을 받아옴
+    echo "after adding interface. 사용된 포트: $PORT" >&2
 
     set_config
     echo "after setting config." >&2
