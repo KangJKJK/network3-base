@@ -366,7 +366,7 @@ cmd_up() {
     execute_hooks "${POST_UP[@]}"
 
     # cmd_if에서 설정된 포트를 사용하여 대시보드 URL 출력
-    echo "You can access the dashboard by opening https://account.network3.ai/main?o=$(hostname -I | awk '{print $1}'):$PORT in Chrome." >&2
+    echo "대시보드를 열어보세요: https://account.network3.ai/main?o=$(hostname -I | awk '{print $1}'):$PORT in Chrome." >&2
 
     trap - INT TERM EXIT
     echo "node is ready." >&2
