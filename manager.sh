@@ -346,7 +346,7 @@ cmd_up() {
     execute_hooks "${PRE_UP[@]}"
 
     # add_if 호출 및 포트 설정
-    PORT=$(add_if)  # add_if 호출하여 PORT 값을 받아옴
+    PORT=$(add_if) 
     echo "after adding interface. 사용된 포트: $PORT" >&2
 
     set_config
@@ -373,14 +373,14 @@ cmd_up() {
 }
 
 cmd_down() {
-  echo "stopping the node.." >&2
+    echo "stopping the node.." >&2
 	[[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
 	execute_hooks "${PRE_DOWN[@]}"
 	[[ $SAVE_CONFIG -eq 0 ]] || save_config
 	del_if
 	remove_firewall || true
 	execute_hooks "${POST_DOWN[@]}"
-  echo "node is closed." >&2
+    echo "node is closed." >&2
 }
 
 cmd_save() {
@@ -413,6 +413,7 @@ else
 	exit 1
 fi
 
+# cmd_up에서 설정된 PORT를 사용하여 대시보드 URL 출력
 echo "You can access the dashboard by opening https://account.network3.ai/main?o=$(hostname -I | awk '{print $1}'):$PORT in Chrome." >&2
 
 exit 0
