@@ -4,21 +4,21 @@
 # Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
 #
 check_env() {
-	echo "checking env.." >&2
-	# grep -q returns 0 if found, else 1
-	if dpkg -l | grep -qw iptables; then
-	  apt-get install iptables -y
-	fi
+    echo "checking env.." >&2
+    # grep -q returns 0 if found, else 1
+    if dpkg -l | grep -qw iptables; then
+        apt-get install iptables -y
+    fi
 
-	if dpkg -l | grep -qw net-tools; then
-	  apt-get install net-tools -y
-	fi
-  ip_forward="$(sysctl net.ipv4.ip_forward)"
-  if ! [[ $ip_forward =~ 1 ]]; then
-	  echo 1 > /proc/sys/net/ipv4/ip_forward
-	  echo -e "net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.disable_ipv6 = 1\nnet.core.default_qdisc = fq\nnet.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
-	  sysctl -p
-	fi
+    if dpkg -l | grep -qw net-tools; then
+        apt-get install net-tools -y
+    fi
+    ip_forward="$(sysctl net.ipv4.ip_forward)"
+    if ! [[ $ip_forward =~ 1 ]]; then
+        echo 1 > /proc/sys/net/ipv4/ip_forward
+        echo -e "net.ipv4.ip_forward = 1\nnet.ipv6.conf.all.disable_ipv6 = 1\nnet.core.default_qdisc = fq\nnet.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
+        sysctl -p
+    fi
 }
 
 set -e -o pipefail
@@ -60,91 +60,88 @@ PROGRAM="${0##*/}"
 ARGS=( "$@" )
 
 cmd() {
-	#echo "[#] $*" >&2
-	"$@"
+    #echo "[#] $*" >&2
+    "$@"
 }
 
 die() {
-	echo "$PROGRAM: $*" >&2
-	exit 1
+    echo "$PROGRAM: $*" >&2
+    exit 1
 }
 
 parse_options() {
-	local interface_section=0 line key value stripped v netiface
-	netiface=$(ip -o -4 route show to default | awk '{print $5}')
-	echo "local netiface is $netiface" >&2
-	CONFIG_FILE="$1"
-	#[[ $CONFIG_FILE =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]] && CONFIG_FILE="/etc/wireguard/$CONFIG_FILE.conf"
-	[[ $CONFIG_FILE =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]] && CONFIG_FILE="./$CONFIG_FILE.conf"
-	[[ -e $CONFIG_FILE ]] || die "\`$CONFIG_FILE' does not exist"
-	[[ $CONFIG_FILE =~ (^|/)([a-zA-Z0-9_=+.-]{1,15})\.conf$ ]] || die "The config file must be a valid interface name, followed by .conf"
-	CONFIG_FILE="$(readlink -f "$CONFIG_FILE")"
-#	((($(stat -c '0%#a' "$CONFIG_FILE") & $(stat -c '0%#a' "${CONFIG_FILE%/*}") & 0007) == 0)) || echo "Warning: \`$CONFIG_FILE' is world accessible" >&2
-	((($(stat -c '0%#a' "$CONFIG_FILE") & $(stat -c '0%#a' "${CONFIG_FILE%/*}") & 0007) == 0)) || echo "Applying configurations.." >&2
-	INTERFACE="${BASH_REMATCH[2]}"
-	shopt -s nocasematch
-	while read -r line || [[ -n $line ]]; do
-		stripped="${line%%\#*}"
-		key="${stripped%%=*}"; key="${key##*([[:space:]])}"; key="${key%%*([[:space:]])}"
-		value="${stripped#*=}"; value="${value##*([[:space:]])}"; value="${value%%*([[:space:]])}"
-		[[ $key == "["* ]] && interface_section=0
-		[[ $key == "[Interface]" ]] && interface_section=1
-		if [[ $interface_section -eq 1 ]]; then
-			case "$key" in
-			Address) ADDRESSES+=( ${value//,/ } ); continue ;;
-			MTU) MTU="$value"; continue ;;
-			DNS) for v in ${value//,/ }; do
-				[[ $v =~ (^[0-9.]+$)|(^.*:.*$) ]] && DNS+=( $v ) || DNS_SEARCH+=( $v )
-			done; continue ;;
-			Table) TABLE="$value"; continue ;;
-			PreUp) PRE_UP+=( "$value" ); continue ;;
-			PreDown) PRE_DOWN+=( "$value" ); continue ;;
-			PostUp) POST_UP+=( "${value//eth0/$netiface}" ); continue ;;
-			PostDown) POST_DOWN+=( "${value//eth0/$netiface}" ); continue ;;
-			SaveConfig) read_bool SAVE_CONFIG "$value"; continue ;;
-			esac
-		fi
-		WG_CONFIG+="$line"$'\n'
-	done < "$CONFIG_FILE"
-	shopt -u nocasematch
+    local interface_section=0 line key value stripped v netiface
+    netiface=$(ip -o -4 route show to default | awk '{print $5}')
+    echo "local netiface is $netiface" >&2
+    CONFIG_FILE="$1"
+    [[ $CONFIG_FILE =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]] && CONFIG_FILE="./$CONFIG_FILE.conf"
+    [[ -e $CONFIG_FILE ]] || die "\`$CONFIG_FILE' does not exist"
+    [[ $CONFIG_FILE =~ (^|/)([a-zA-Z0-9_=+.-]{1,15})\.conf$ ]] || die "The config file must be a valid interface name, followed by .conf"
+    CONFIG_FILE="$(readlink -f "$CONFIG_FILE")"
+    ((($(stat -c '0%#a' "$CONFIG_FILE") & $(stat -c '0%#a' "${CONFIG_FILE%/*}") & 0007) == 0)) || echo "Applying configurations.." >&2
+    INTERFACE="${BASH_REMATCH[2]}"
+    shopt -s nocasematch
+    while read -r line || [[ -n $line ]]; do
+        stripped="${line%%\#*}"
+        key="${stripped%%=*}"; key="${key##*([[:space:]])}"; key="${key%%*([[:space:]])}"
+        value="${stripped#*=}"; value="${value##*([[:space:]])}"; value="${value%%*([[:space:]])}"
+        [[ $key == "["* ]] && interface_section=0
+        [[ $key == "[Interface]" ]] && interface_section=1
+        if [[ $interface_section -eq 1 ]]; then
+            case "$key" in
+            Address) ADDRESSES+=( ${value//,/ } ); continue ;;
+            MTU) MTU="$value"; continue ;;
+            DNS) for v in ${value//,/ }; do
+                [[ $v =~ (^[0-9.]+$)|(^.*:.*$) ]] && DNS+=( $v ) || DNS_SEARCH+=( $v )
+            done; continue ;;
+            Table) TABLE="$value"; continue ;;
+            PreUp) PRE_UP+=( "$value" ); continue ;;
+            PreDown) PRE_DOWN+=( "$value" ); continue ;;
+            PostUp) POST_UP+=( "${value//eth0/$netiface}" ); continue ;;
+            PostDown) POST_DOWN+=( "${value//eth0/$netiface}" ); continue ;;
+            SaveConfig) read_bool SAVE_CONFIG "$value"; continue ;;
+            esac
+        fi
+        WG_CONFIG+="$line"$'\n'
+    done < "$CONFIG_FILE"
+    shopt -u nocasematch
 }
 
 read_bool() {
-	case "$2" in
-	true) printf -v "$1" 1 ;;
-	false) printf -v "$1" 0 ;;
-	*) die "\`$2' is neither true nor false"
-	esac
+    case "$2" in
+    true) printf -v "$1" 1 ;;
+    false) printf -v "$1" 0 ;;
+    *) die "\`$2' is neither true nor false"
+    esac
 }
 
 auto_su() {
-	[[ $UID == 0 ]] || exec sudo -p "$PROGRAM must be run as root. Please enter the password for %u to continue: " -- "$BASH" -- "$SELF" "${ARGS[@]}"
+    [[ $UID == 0 ]] || exec sudo -p "$PROGRAM must be run as root. Please enter the password for %u to continue: " -- "$BASH" -- "$SELF" "${ARGS[@]}"
 }
 
 add_if() {
-#	local ret
-#	if ! cmd ip link add "$INTERFACE" type wireguard; then
-#		ret=$?
-#	fi
-#export LOG_LEVEL="debug"
-	echo "starting node..." >&2
-	# cmd "./node" --ifname "$INTERFACE"
-	cmd node --ifname "$INTERFACE"
-	echo "main is up." >&2
-	cmd ifconfig "$INTERFACE" up
-	echo "interface is up." >&2
-}
+    # 기본 포트 설정
+    PORT=8080
 
-add_if2() {
-	local ret
-	if ! cmd ip link add "$INTERFACE" type wireguard; then
-		ret=$?
-		[[ -e /sys/module/wireguard ]] || ! command -v "${WG_QUICK_USERSPACE_IMPLEMENTATION:-wireguard-go}" >/dev/null && exit $ret
-		echo "[!] Missing WireGuard kernel module. Falling back to slow userspace implementation." >&2
-		cmd "${WG_QUICK_USERSPACE_IMPLEMENTATION:-wireguard-go}" "$INTERFACE"
-	fi
-}
+    # 사용 가능한 포트를 찾는 함수
+    find_available_port() {
+        while ss -tuln | grep -q ":$PORT"; do
+            ((PORT++))
+        done
+    }
 
+    # 사용 가능한 포트 찾기
+    find_available_port
+
+    echo "사용할 포트: $PORT"  # 최종 포트 출력
+
+    echo "starting node..." >&2
+    # cmd "./node" --ifname "$INTERFACE"
+    cmd node --ifname "$INTERFACE" --port "$PORT"
+    echo "main is up." >&2
+    cmd ifconfig "$INTERFACE" up
+    echo "interface is up." >&2
+}
 
 del_if() {
 	local table
