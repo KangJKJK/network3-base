@@ -339,27 +339,29 @@ cmd_usage() {
 }
 
 cmd_up() {
-	local i
-	[[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
-	trap 'del_if; exit' INT TERM EXIT
-	execute_hooks "${PRE_UP[@]}"
-	add_if
-	echo "after adding if." >&2
-	set_config
-	echo "after setting config." >&2
-	for i in "${ADDRESSES[@]}"; do
-		add_addr "$i"
-	done
-	echo "after adding addr." >&2
-	set_mtu_up
-	echo "after mtu up." >&2
-	add_route "10.77.64.0/20"
-	echo "routes added." >&2
-	execute_hooks "${POST_UP[@]}"
-	echo "node is ready." >&2
-	echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
-	trap - INT TERM EXIT
+  # 기존 인터페이스 존재 여부 체크 부분을 주석 처리하거나 제거합니다.
+  # [[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
+
+  trap 'del_if; exit' INT TERM EXIT
+  execute_hooks "${PRE_UP[@]}"
+  add_if
+  echo "after adding if." >&2
+  set_config
+  echo "after setting config." >&2
+  for i in "${ADDRESSES[@]}"; do
+    add_addr "$i"
+  done
+  echo "after adding addr." >&2
+  set_mtu_up
+  echo "after mtu up." >&2
+  add_route "10.77.64.0/20"
+  echo "routes added." >&2
+  execute_hooks "${POST_UP[@]}"
+  echo "node is ready." >&2
+  echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
+  trap - INT TERM EXIT
 }
+
 
 cmd_down() {
   echo "stopping the node.." >&2
