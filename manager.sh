@@ -344,6 +344,14 @@ cmd_up() {
 
   trap 'del_if; exit' INT TERM EXIT
   execute_hooks "${PRE_UP[@]}"
+  
+  # 고유한 인터페이스 이름 생성
+  local NEW_INTERFACE="wg$((RANDOM % 100))"
+  echo "Starting new interface: $NEW_INTERFACE" >&2
+  
+  # INTERFACE 환경변수 변경
+  INTERFACE="$NEW_INTERFACE"
+
   add_if
   echo "after adding if." >&2
   set_config
