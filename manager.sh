@@ -315,7 +315,7 @@ cmd_usage() {
 
 add_if() {
     # 기본 포트 설정
-    local PORT=8080
+    local PORT=1433
 
     # 사용 가능한 포트를 찾는 함수
     find_available_port() {
@@ -328,6 +328,11 @@ add_if() {
     find_available_port
 
     echo "사용할 포트: $PORT"  # 최종 포트 출력
+
+    # wg0.conf의 ListenPort를 사용 가능한 포트로 변경
+    sed -i "s/^ListenPort.*/ListenPort = $PORT/" /etc/wireguard/wg0.conf
+
+    echo "wg0.conf 파일의 ListenPort가 $PORT로 설정되었습니다."
 
     echo "starting node..." >&2
     cmd node --ifname "$INTERFACE" --port "$PORT"  # 수정된 부분
