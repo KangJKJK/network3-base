@@ -122,28 +122,33 @@ auto_su() {
 }
 
 add_if() {
-    local INTERFACE="$1"  # 인터페이스 이름을 인자로 받기
+    local INTERFACE="$1"
     echo "Starting node..." >&2
     
-    # 인터페이스 추가 시도
     if ! cmd ip link add "$INTERFACE" type wireguard; then
         echo "Failed to add interface $INTERFACE" >&2
-        return 1  # 오류 발생 시 함수 종료
+        return 1
     fi
     
-    # 노드 시작
-    cmd node --ifname "$INTERFACE" || { 
-        echo "Failed to start node with interface $INTERFACE" >&2
-        return 1  # 오류 발생 시 함수 종료
-    }
-    
+    # INTERFACE가 올바르게 생성되었는지 확인
+    if cmd ip link show "$INTERFACE" > /dev/null; then
+        cmd node --ifname "$INTERFACE" || { 
+            echo "Failed to start node with interface $INTERFACE" >&2
+            return 1
+        }
+    else
+        echo "Interface $INTERFACE does not exist." >&2
+        return 1
+    fi
+
     echo "Main is up." >&2
     cmd ifconfig "$INTERFACE" up || {
         echo "Failed to bring up interface $INTERFACE" >&2
-        return 1  # 오류 발생 시 함수 종료
+        return 1
     }
     echo "Interface is up." >&2
 }
+
 
 add_if2() {
 	local ret
