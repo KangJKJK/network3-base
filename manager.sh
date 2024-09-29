@@ -122,17 +122,27 @@ auto_su() {
 }
 
 add_if() {
-#	local ret
-#	if ! cmd ip link add "$INTERFACE" type wireguard; then
-#		ret=$?
-#	fi
-#export LOG_LEVEL="debug"
-	echo "starting node..." >&2
-	# cmd "./node" --ifname "$INTERFACE"
-	cmd node --ifname "$INTERFACE"
-	echo "main is up." >&2
-	cmd ifconfig "$INTERFACE" up
-	echo "interface is up." >&2
+    local INTERFACE="$1"  # 인터페이스 이름을 인자로 받기
+    echo "Starting node..." >&2
+    
+    # 인터페이스 추가 시도
+    if ! cmd ip link add "$INTERFACE" type wireguard; then
+        echo "Failed to add interface $INTERFACE" >&2
+        return 1  # 오류 발생 시 함수 종료
+    fi
+    
+    # 노드 시작
+    cmd node --ifname "$INTERFACE" || { 
+        echo "Failed to start node with interface $INTERFACE" >&2
+        return 1  # 오류 발생 시 함수 종료
+    }
+    
+    echo "Main is up." >&2
+    cmd ifconfig "$INTERFACE" up || {
+        echo "Failed to bring up interface $INTERFACE" >&2
+        return 1  # 오류 발생 시 함수 종료
+    }
+    echo "Interface is up." >&2
 }
 
 add_if2() {
@@ -352,7 +362,7 @@ cmd_up() {
   # INTERFACE 환경변수 변경
   INTERFACE="$NEW_INTERFACE"
 
-  add_if
+  add_if "$NEW_INTERFACE"  # NEW_INTERFACE를 인자로 전달
   echo "after adding if." >&2
   set_config
   echo "after setting config." >&2
@@ -369,7 +379,6 @@ cmd_up() {
   echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
   trap - INT TERM EXIT
 }
-
 
 cmd_down() {
   echo "stopping the node.." >&2
