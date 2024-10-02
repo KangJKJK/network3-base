@@ -125,31 +125,24 @@ auto_su() {
 add_if() {
     local INTERFACE="$1"
     echo "Starting node..." >&2
-    
-    if ! cmd ip link add "$INTERFACE" type wireguard; then
+
+    if ! ip link add "$INTERFACE" type wireguard; then
         echo "Failed to add interface $INTERFACE" >&2
         return 1
     fi
-    
+
     # INTERFACE가 올바르게 생성되었는지 확인
-    if cmd ip link show "$INTERFACE" > /dev/null; then
-        cmd node --ifname "$INTERFACE" || { 
-            echo "Failed to start node with interface $INTERFACE" >&2
-            return 1
-        }
+    if ip link show "$INTERFACE" > /dev/null; then
+        # WireGuard 설정 적용
+        wg set "$INTERFACE" private-key /usr/local/etc/wireguard/utun.key
+        ip link set up dev "$INTERFACE"
     else
-        echo "Interface $INTERFACE does not exist." >&2
+        echo "Interface $INTERFACE not found" >&2
         return 1
     fi
 
-    echo "Main is up." >&2
-    cmd ifconfig "$INTERFACE" up || {
-        echo "Failed to bring up interface $INTERFACE" >&2
-        return 1
-    }
-    echo "Interface is up." >&2
+    echo "Interface $INTERFACE is up." >&2
 }
-
 
 add_if2() {
 	local ret
