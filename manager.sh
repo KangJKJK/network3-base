@@ -361,16 +361,14 @@ cmd_usage() {
 }
 
 cmd_up() {
-  # 기존 인터페이스 생성 로직 유지
+    # 고유한 인터페이스 이름 생성
+    local NEW_INTERFACE="wg$((RANDOM % 100))"
+    echo "Starting new interface: $NEW_INTERFACE" >&2
 
-  # 고유한 인터페이스 이름 생성
-  local NEW_INTERFACE="wg$((RANDOM % 100))"
-  echo "Starting new interface: $NEW_INTERFACE" >&2
+    INTERFACE="$NEW_INTERFACE"
 
-  INTERFACE="$NEW_INTERFACE"
-
-  # WireGuard 설정 파일 생성
-  cat <<EOF > /etc/wireguard/$INTERFACE.conf
+    # WireGuard 설정 파일 생성
+    cat <<EOF > /etc/wireguard/$INTERFACE.conf
 [Interface]
 Address = 10.0.0.1/24
 ListenPort = $CURRENT_PORT
@@ -381,42 +379,48 @@ PublicKey = <peer_public_key>
 AllowedIPs = 10.0.0.2/32
 EOF
 
-  add_if "$INTERFACE"  # NEW_INTERFACE를 인자로 전달
-  echo "after adding if." >&2
-  set_config
-  echo "after setting config." >&2
-  for i in "${ADDRESSES[@]}"; do
-    add_addr "$i"
-  done
-  echo "after adding addr." >&2
-  set_mtu_up
-  echo "after mtu up." >&2
-  add_route "10.77.64.0/20"
-  echo "routes added." >&2
-  execute_hooks "${POST_UP[@]}"
-  echo "node is ready." >&2
-  echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
-  trap - INT TERM EXIT
+    add_if "$INTERFACE"  # NEW_INTERFACE를 인자로 전달
+    echo "after adding if." >&2
+    set_config
+    echo "after setting config." >&2
+    for i in "${ADDRESSES[@]}"; do
+        add_addr "$i"
+    done
+    echo "after adding addr." >&2
+    set_mtu_up
+    echo "after mtu up." >&2
+    add_route "10.77.64.0/20"
+    echo "routes added." >&2
+    execute_hooks "${POST_UP[@]}"
+    echo "node is ready." >&2
+    echo "Access the dashboard by opening https://account.network3.ai/main?o=<your_ip>:8080 in chrome where <your_ip> is the accessible ip of this machine" >&2
+    trap - INT TERM EXIT
 
-  # WireGuard를 포그라운드에서 실행
-  exec wg-quick up "$INTERFACE"
+    # WireGuard를 포그라운드에서 실행하여 컨테이너가 종료되지 않도록 함
+    exec wg-quick up "$INTERFACE"
 }
 
 add_if() {
     local INTERFACE="$1"
-    
+
     echo "Starting node..." >&2
-    
-    if ! cmd ip link add "$INTERFACE" type wireguard; then
+
+    # 인터페이스가 이미 존재하는지 확인
+    if ip link show "$INTERFACE" > /dev/null 2>&1; then
+        echo "Interface $INTERFACE already exists." >&2
+        return 0
+    fi
+
+    if ! ip link add "$INTERFACE" type wireguard; then
         echo "Failed to add interface $INTERFACE" >&2
         return 1
     fi
-    
+
     # INTERFACE가 올바르게 생성되었는지 확인
-    if cmd ip link show "$INTERFACE" > /dev/null; then
-        # 올바른 명령어로 노드 시작
-        cmd wg set "$INTERFACE" private-key /usr/local/etc/wireguard/utun.key
-        cmd ip link set up dev "$INTERFACE"
+    if ip link show "$INTERFACE" > /dev/null; then
+        # WireGuard 설정 적용
+        wg set "$INTERFACE" private-key /usr/local/etc/wireguard/utun.key
+        ip link set up dev "$INTERFACE"
     else
         echo "Interface $INTERFACE not found" >&2
         return 1
@@ -424,23 +428,23 @@ add_if() {
 }
 
 cmd_down() {
-  echo "stopping the node.." >&2
-	[[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
-	execute_hooks "${PRE_DOWN[@]}"
-	[[ $SAVE_CONFIG -eq 0 ]] || save_config
-	del_if
-	remove_firewall || true
-	execute_hooks "${POST_DOWN[@]}"
-  echo "node is closed." >&2
+    echo "stopping the node.." >&2
+    [[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
+    execute_hooks "${PRE_DOWN[@]}"
+    [[ $SAVE_CONFIG -eq 0 ]] || save_config
+    del_if
+    remove_firewall || true
+    execute_hooks "${POST_DOWN[@]}"
+    echo "node is closed." >&2
 }
 
 cmd_save() {
-	[[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
-	save_config
+    [[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
+    save_config
 }
 
 cmd_strip() {
-	echo "$WG_CONFIG"
+    echo "$WG_CONFIG"
 }
 
 # ~~ function override insertion point ~~
