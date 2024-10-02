@@ -291,8 +291,8 @@ add_default() {
 	return 0
 }
 
-set_config() {
-  [[ -d "/usr/local/etc/wireguard" ]] || cmd mkdir -p /usr/local/etc/wireguard
+et_config() {
+  [[ -d "/usr/local/etc/wireguard" ]] || (cmd mkdir -p /usr/local/etc/wireguard)
   if [[ ! -f "/usr/local/etc/wireguard/utun.key" ]]; then
     cmd wg genkey > /usr/local/etc/wireguard/utun.key
     cmd chmod 600 /usr/local/etc/wireguard/utun.key
@@ -303,9 +303,12 @@ set_config() {
 }
 
 cmd_key() {
-  cat /usr/local/etc/wireguard/utun.key
+  if [[ -f "/usr/local/etc/wireguard/utun.key" ]]; then
+    cat /usr/local/etc/wireguard/utun.key
+  else
+    echo "utun.key 파일을 찾을 수 없습니다."
+  fi
 }
-
 save_config() {
 	local old_umask new_config current_config address cmd
 	[[ $(ip -all -brief address show dev "$INTERFACE") =~ ^$INTERFACE\ +\ [A-Z]+\ +(.+)$ ]] || true
