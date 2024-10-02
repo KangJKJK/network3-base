@@ -390,6 +390,8 @@ cmd_up() {
   echo "node is ready." >&2
   echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
   trap - INT TERM EXIT
+  # WireGuard를 포그라운드에서 실행
+  exec wg-quick up "$INTERFACE"
 }
 
 add_if() {
