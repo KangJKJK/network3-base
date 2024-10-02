@@ -316,7 +316,7 @@ cmd_usage() {
     cat >&2 <<-_EOF
     Usage: $PROGRAM [ up | down ]
     sudo is necessary for this program would add / remove virtual network interface.
-    _EOF
+_EOF
 }
 
 cmd_up() {
