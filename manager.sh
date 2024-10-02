@@ -364,9 +364,8 @@ cmd_up() {
     # 고유한 인터페이스 이름 생성
     local NEW_INTERFACE
     local PROXY_HASH=$(echo -n "$http_proxy" | md5sum | cut -d' ' -f1)  # 프록시의 해시값 사용
-    local TIMESTAMP=$(date +%s)  # 타임스탬프 추가
     while true; do
-        NEW_INTERFACE="wg${PROXY_HASH:0:4}${TIMESTAMP: -4}"  # 해시값과 타임스탬프 조합
+        NEW_INTERFACE="wg${PROXY_HASH:0:6}$((RANDOM % 1000))"  # 해시값과 랜덤 숫자 조합
         if ! ip link show "$NEW_INTERFACE" > /dev/null 2>&1; then
             break
         fi
@@ -408,27 +407,6 @@ EOF
     exec wg-quick up "$INTERFACE"
 }
 
-add_if() {
-    local INTERFACE="$1"
-
-    echo "Starting node..." >&2
-
-    if ! ip link add "$INTERFACE" type wireguard; then
-        echo "Failed to add interface $INTERFACE" >&2
-        return 1
-    fi
-
-    # INTERFACE가 올바르게 생성되었는지 확인
-    if ip link show "$INTERFACE" > /dev/null; then
-        # WireGuard 설정 적용
-        wg set "$INTERFACE" private-key /usr/local/etc/wireguard/utun.key
-        ip link set up dev "$INTERFACE"
-    else
-        echo "Interface $INTERFACE not found" >&2
-        return 1
-    fi
-}
-
 cmd_down() {
     echo "stopping the node.." >&2
     [[ " $(wg show interfaces) " == *" $INTERFACE "* ]] || die "\`$INTERFACE' is not a WireGuard interface"
@@ -452,22 +430,21 @@ cmd_strip() {
 # ~~ function override insertion point ~~
 
 if [[ $# -eq 1 && ( $1 == --help || $1 == -h || $1 == help ) ]]; then
-	cmd_usage
+    cmd_usage
 elif [[ $# -eq 1 && $1 == up ]]; then
-	auto_su
-	parse_options "wg0"
-	check_env
-	cmd_up
+    auto_su
+    check_env
+    cmd_up
 elif [[ $# -eq 1 && $1 == down ]]; then
-	auto_su
-	parse_options "wg0"
-	cmd_down
+    auto_su
+    parse_options "$INTERFACE"
+    cmd_down
 elif [[ $# -eq 1 && $1 == key ]]; then
-	auto_su
-	cmd_key
+    auto_su
+    cmd_key
 else
-	cmd_usage
-	exit 1
+    cmd_usage
+    exit 1
 fi
 
 exit 0
