@@ -363,8 +363,9 @@ cmd_usage() {
 cmd_up() {
     # 고유한 인터페이스 이름 생성
     local NEW_INTERFACE
+    local PROXY_HASH=$(echo -n "$http_proxy" | md5sum | cut -d' ' -f1)  # 프록시의 해시값 사용
     while true; do
-        NEW_INTERFACE="wg$((RANDOM % 100))"
+        NEW_INTERFACE="wg${PROXY_HASH:0:6}"  # 해시값의 앞 6자리 사용
         if ! ip link show "$NEW_INTERFACE" > /dev/null 2>&1; then
             break
         fi
