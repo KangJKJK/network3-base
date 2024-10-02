@@ -360,7 +360,7 @@ cmd_usage() {
 	_EOF
 }
 
-cmd_up() {
+ccmd_up() {
   # 기존 인터페이스 존재 여부 체크 부분을 주석 처리하거나 제거합니다.
   # [[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
 
@@ -390,6 +390,27 @@ cmd_up() {
   echo "node is ready." >&2
   echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
   trap - INT TERM EXIT
+}
+
+add_if() {
+    local INTERFACE="$1"
+    
+    echo "Starting node..." >&2
+    
+    if ! cmd ip link add "$INTERFACE" type wireguard; then
+        echo "Failed to add interface $INTERFACE" >&2
+        return 1
+    fi
+    
+    # INTERFACE가 올바르게 생성되었는지 확인
+    if cmd ip link show "$INTERFACE" > /dev/null; then
+        # 올바른 명령어로 노드 시작
+        cmd wg set "$INTERFACE" private-key /usr/local/etc/wireguard/utun.key
+        cmd ip link set up dev "$INTERFACE"
+    else
+        echo "Interface $INTERFACE not found" >&2
+        return 1
+    fi
 }
 
 cmd_down() {
