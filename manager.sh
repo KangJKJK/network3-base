@@ -360,7 +360,7 @@ cmd_usage() {
 	_EOF
 }
 
-ccmd_up() {
+cmd_up() {
   # 기존 인터페이스 존재 여부 체크 부분을 주석 처리하거나 제거합니다.
   # [[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
 
