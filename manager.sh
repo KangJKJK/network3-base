@@ -362,7 +362,13 @@ cmd_usage() {
 
 cmd_up() {
     # 고유한 인터페이스 이름 생성
-    local NEW_INTERFACE="wg$((RANDOM % 100))"
+    local NEW_INTERFACE
+    while true; do
+        NEW_INTERFACE="wg$((RANDOM % 100))"
+        if ! ip link show "$NEW_INTERFACE" > /dev/null 2>&1; then
+            break
+        fi
+    done
     echo "Starting new interface: $NEW_INTERFACE" >&2
 
     INTERFACE="$NEW_INTERFACE"
@@ -404,12 +410,6 @@ add_if() {
     local INTERFACE="$1"
 
     echo "Starting node..." >&2
-
-    # 인터페이스가 이미 존재하는지 확인
-    if ip link show "$INTERFACE" > /dev/null 2>&1; then
-        echo "Interface $INTERFACE already exists." >&2
-        return 0
-    fi
 
     if ! ip link add "$INTERFACE" type wireguard; then
         echo "Failed to add interface $INTERFACE" >&2
