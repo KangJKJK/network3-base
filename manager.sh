@@ -361,20 +361,27 @@ cmd_usage() {
 }
 
 cmd_up() {
-  # 기존 인터페이스 존재 여부 체크 부분을 주석 처리하거나 제거합니다.
-  # [[ -z $(ip link show dev "$INTERFACE" 2>/dev/null) ]] || die "node is running."
+  # 기존 인터페이스 생성 로직 유지
 
-  trap 'del_if; exit' INT TERM EXIT
-  execute_hooks "${PRE_UP[@]}"
-  
   # 고유한 인터페이스 이름 생성
   local NEW_INTERFACE="wg$((RANDOM % 100))"
   echo "Starting new interface: $NEW_INTERFACE" >&2
-  
-  # INTERFACE 환경변수 변경
+
   INTERFACE="$NEW_INTERFACE"
 
-  add_if "$NEW_INTERFACE"  # NEW_INTERFACE를 인자로 전달
+  # WireGuard 설정 파일 생성
+  cat <<EOF > /etc/wireguard/$INTERFACE.conf
+[Interface]
+Address = 10.0.0.1/24
+ListenPort = $CURRENT_PORT
+PrivateKey = $(cat /usr/local/etc/wireguard/utun.key)
+
+[Peer]
+PublicKey = <peer_public_key>
+AllowedIPs = 10.0.0.2/32
+EOF
+
+  add_if "$INTERFACE"  # NEW_INTERFACE를 인자로 전달
   echo "after adding if." >&2
   set_config
   echo "after setting config." >&2
@@ -390,6 +397,7 @@ cmd_up() {
   echo "node is ready." >&2
   echo "you can access the dashboard by opening https://account.network3.ai/main?o=xx.xx.xx.xx:8080 in chrome where xx.xx.xx.xx is the accessible ip of this machine" >&2
   trap - INT TERM EXIT
+
   # WireGuard를 포그라운드에서 실행
   exec wg-quick up "$INTERFACE"
 }
