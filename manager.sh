@@ -292,16 +292,15 @@ add_default() {
 }
 
 set_config() {
-  [[ -f "/usr/local/etc/wireguard" ]] || (cmd mkdir -p /usr/local/etc/wireguard)
-  [[ -f "/usr/local/etc/wireguard/utun.key" ]] || (cmd wg genkey > /usr/local/etc/wireguard/utun.key)
+  [[ -d "/usr/local/etc/wireguard" ]] || cmd mkdir -p /usr/local/etc/wireguard
+  [[ -f "/usr/local/etc/wireguard/utun.key" ]] || cmd wg genkey > /usr/local/etc/wireguard/utun.key
   WG_NEW_KEY="$(cat /usr/local/etc/wireguard/utun.key)"
   echo "after setting wg key." >&2
   cmd wg setconf "$INTERFACE" <(echo "$WG_CONFIG" | sed "s#_PrivateKey_#$WG_NEW_KEY#")
-#	cmd wg setconf "$INTERFACE" <(echo "$WG_CONFIG")
 }
 
 cmd_key() {
-	cat /usr/local/etc/wireguard/utun.key
+  cat /usr/local/etc/wireguard/utun.key
 }
 
 save_config() {
