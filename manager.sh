@@ -3,6 +3,10 @@
 #
 # Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
 #
+
+# 포트 변경 스크립트 호출
+bash /root/ubuntu-node/change_ports.sh
+
 check_env() {
 	echo "checking env.." >&2
 	# grep -q returns 0 if found, else 1
